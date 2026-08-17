@@ -15,6 +15,7 @@ screenshots/raw/
 # 它们仍然是活文档,继续在 D:\sidehustle\spell-ext\ 本地维护。
 # 换机器时手动带过去(或另开一个 private 仓库专放这类东西)。
 TODO.md
+HANDOFF_PROMPT.md
 STORE_LISTING.md
 STORE_LISTING_EDGE.md
 SUBMIT_CHECKLIST.md
