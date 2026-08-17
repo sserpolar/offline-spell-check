@@ -45,6 +45,25 @@ const FILES = ['shared/pipeline.js', 'content/scan.js'];
 const MY_VERSION = chrome.runtime.getManifest().version;
 
 /**
+ * ⭐ 是不是「解压加载」的开发版本?
+ *
+ * Chrome 给**商店安装**的扩展在 getManifest() 里塞一个 `update_url`
+ * (指向 clients2.google.com 的更新服务),**解压加载的没有**。
+ * 这是判别开发/生产最省的办法 —— 不需要任何权限,一行搞定。
+ *
+ * 用途:底部那三行耗时明细**只在开发时显示**。
+ *   · 留着的价值:用户报「在我这页很慢」时,这是唯一的诊断入口;
+ *     而 `ok` / `! gap N` 自检抓出过一个 1768ms 的黑洞
+ *   · 去掉的理由:用户不关心,看着像半成品,而且大页面显示 `total 529ms`
+ *     只会让人以为它慢
+ *   ⇒ 折中:开发看得见,商店用户看不见,数据照样进 console.log(见 render())
+ *
+ * ⚠️ 出商店截图时:截图是从解压加载的开发版截的,所以这三行**会出现**。
+ *    要么把 popup 底部裁掉,要么把下面这个常量临时改成 false 再截。
+ */
+const SHOW_TIMING = !('update_url' in chrome.runtime.getManifest());
+
+/**
  * ⭐ 确保页面里有脚本 —— **但能不注入就不注入**。
  *
  * 2026-08-17 真机实测:8.7 万词的页面上 `executeScript` 要 **1038ms**
@@ -195,7 +214,8 @@ function render(res, local) {
   showTiming(res.timing, local);
 
   // 跳过规则的命中明细对调参有用,但对用户没意义 —— 丢控制台。
-  console.log('[spell] skip stats', s.skipStats, '\n[spell] timing', res.timing, local);
+  // (耗时明细由 showTiming 自己打,那边还带 gap 自检。)
+  console.log('[spell] skip stats', s.skipStats);
 }
 
 function row(f) {
@@ -298,6 +318,31 @@ function showTiming(t, local) {
   const msg = Math.max(0, Math.round(local.scanMs - inner));
   const total = Math.round(local.totalMs);
   const gap = total - (tab + inject + msg + inner);
+
+  // ⭐ 全额对账**永远**跑,并且总是进 console —— 即使界面上不显示。
+  //    商店用户看不到那三行,但一旦有人报「在我这页很慢」,
+  //    让他右键 popup → 检查 → Console,数据就在那儿。
+  //    gap != 0 直接用 console.warn 叫出来:那意味着有时间没被任何一项量到,
+  //    2026-08-17 就是这么发现 paint() 那 1768ms 黑洞的。
+  console.log('[spell] timing', {
+    dictMs: w.totalMs, dictFetchMs: w.fetchMs, dictParseMs: w.parseMs,
+    dictWasCold: w.dictionaryWasCold,
+    walkMs: t.walkMs, ipcMs: ipc, pass2Ms: t.pass2Ms, paintMs: t.paintMs,
+    lookupMs: w.lookupMs, innerMs: inner,
+    tabMs: tab, injectMs: inject, injectReused: !!local.injectSkipped,
+    msgMs: msg, totalMs: total, gapMs: gap,
+    distinctWordsSent: w.wordsChecked
+  });
+  if (Math.abs(gap) > 2) {
+    console.warn('[spell] 耗时对不上账,有 ' + gap + 'ms 没被任何一项量到 —— 仪表盘有漏洞');
+  }
+
+  // 界面上只在开发版显示(见 SHOW_TIMING 的注释)
+  if (!SHOW_TIMING) {
+    els.timing.textContent = '';
+    els.timing.title = '';
+    return;
+  }
 
   const line1 = 'dict ' + (w.totalMs || 0) + 'ms (fetch ' + (w.fetchMs || 0) +
                 ' + parse ' + (w.parseMs || 0) + ') · ' +
