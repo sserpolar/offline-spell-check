@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- ⬇️ <title> 里故意有个错字:Dashbord。它显示在浏览器标签栏,不在页面里,
+       所以必须靠「属性扫描」抓 —— 这正是在位者漏掉的那类("subject lines")。 -->
+  <title>Dashbord — offline spell check test page</title>
+  <style>
+    body { font: 15px/1.65 -apple-system, "Segoe UI", system-ui, sans-serif;
+           max-width: 780px; margin: 32px auto; padding: 0 20px; color: #1b1f27; }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    h2 { font-size: 15px; margin: 28px 0 6px; padding-top: 14px;
+         border-top: 1px solid #e3e6ea; color: #444c5a; }
+    .expect { background: #f4f6f8; border-left: 3px solid #6ebeff;
+              padding: 6px 10px; font-size: 12.5px; color: #4a5361; margin: 6px 0 10px; }
+    code, pre { background: #f2f3f5; border-radius: 3px; }
+    code { padding: 1px 4px; }
+    pre { padding: 10px 12px; overflow-x: auto; }
+    table { border-collapse: collapse; font-size: 13px; margin: 10px 0; }
+    th, td { border: 1px solid #dfe3e8; padding: 5px 9px; text-align: left; }
+    th { background: #f4f6f8; }
+    nav ul { list-style: none; display: flex; gap: 14px; padding: 0; font-size: 13px; }
+    .filler { color: #6b7280; font-size: 13.5px; }
+    footer { margin-top: 34px; border-top: 1px solid #e3e6ea;
+             padding-top: 12px; font-size: 12px; color: #6b7280; }
+  </style>
+</head>
+<body>
+
+<h1>Offline Spell Check — self-checking test page</h1>
+<p class="filler">
+  Load the extension, open this page, click the toolbar icon.
+  Every section below says what <em>should</em> happen. If one of them is wrong,
+  that section name is the bug report.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════ ① 该抓到 -->
+<h2>① Real misspellings — ALL 18 must get a red wavy underline</h2>
+<div class="expect">Expected: 18 distinct words highlighted. This is the measured 18/18 recall case.</div>
+<p>
+  We keep the enviroment and the build seperate, which is neccessary for the
+  maintainance window. The failure occured twice and it is definately not
+  something we recomend. The room cannot accomodate a succesful launch at the
+  begining, and it is a priviledge to keep the format consistant. Please
+  recieve the file, becuase teh order matters adn it is improtant to align it
+  wiht the plan.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════ ② 抓不到(设计如此) -->
+<h2>② Real-word mix-ups — NOTHING here may be highlighted</h2>
+<div class="expect">
+  Expected: <b>zero</b> highlights in this paragraph. Measured 0/6 — a dictionary
+  cannot judge these, and the store copy says so out loud. If any of these light
+  up, the copy is now under-promising, not over-promising.
+</div>
+<p>
+  Fill in the from below, than send it to there own team. Do not loose the
+  file; that would effect the schedule and the room would be quite for a week.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════ ③ 代码块 -->
+<h2>③ Code — NOTHING here may be highlighted</h2>
+<div class="expect">
+  Expected: <b>zero</b> highlights. <code>configuraton</code> and
+  <code>mispeled</code> are misspelled on purpose. Measured 0/2 — skipping code
+  is intentional, not a miss.
+</div>
+<p>Inline: the <code>configuraton</code> flag and the <code>mispeled</code> key.</p>
+<pre><code>const configuraton = {
+  mispeled: true,          // seperate, neccessary, occured
+  retries: 3
+};</code></pre>
+<p>Also <kbd>Ctrl+Shift+P</kbd> and <samp>enviroment not found</samp> must stay clean.</p>
+
+<!-- ══════════════════════════════════════════════════════════ ④ 属性文本 -->
+<h2>④ Attribute text — 4 amber dashed boxes expected</h2>
+<div class="expect">
+  Expected: amber dashed boxes with a small label, plus 5 amber rows in the popup
+  (4 here + <code>Dashbord</code> from the page <code>&lt;title&gt;</code>).
+  Measured 4/4. This is exactly what the incumbent's review called
+  "misses … certain areas (e.g., subject lines)".
+</div>
+<p>
+  <img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
+       alt="Screnshot of the dashboard" width="120" height="60"
+       style="border:1px solid #ccc;background:#eee">
+</p>
+<p>
+  <input type="text" placeholder="Your emial address" size="34">
+  <button aria-label="Close the dailog">×</button>
+  <span title="Tooltip with a mispelled word">hover me</span>
+</p>
+
+<!-- ══════════════════════════════════════════════════════════ ⑤ 语言门 -->
+<h2>⑤ Language gate — the German block must stay clean</h2>
+<div class="expect">
+  Expected: <b>zero</b> highlights inside the <code>lang="de"</code> block and
+  inside the language switcher. Measured: without the per-element gate, a page
+  served as German hit a <b>75.48%</b> false-positive rate.
+</div>
+<div lang="de">
+  <p>
+    Die Konfiguration wird auf dem Server gespeichert und entspricht den
+    Vorgaben. Sie können die Einstellungen jederzeit ändern, wenn Sie das
+    möchten, und die Werte sind oder bleiben unverändert.
+  </p>
+</div>
+<nav>
+  <ul>
+    <li lang="de">Deutsch</li>
+    <li lang="es">Español</li>
+    <li lang="pt">Português do Brasil</li>
+    <li lang="fr">Français</li>
+  </ul>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════ ⑥ 跳过规则 -->
+<h2>⑥ Skip rules — NOTHING here may be highlighted</h2>
+<div class="expect">
+  Expected: <b>zero</b> highlights. Every item is a rule that was added because
+  it caused false positives in the 65,000-word measurement.
+</div>
+<table>
+  <thead><tr><th>Rule</th><th>Live sample (must stay clean)</th></tr></thead>
+  <tbody>
+    <tr><td>URL</td><td>See https://developer.mozilla.org/en-US/docs/Web/API/fetch for detail.</td></tr>
+    <tr><td>path</td><td>Open src/main/index.js and lib/utils/helpers.ts next.</td></tr>
+    <tr><td>email</td><td>Write to foo.bar@example.co.uk when ready.</td></tr>
+    <tr><td>dotted id</td><td>Read window.location.href and config.json values.</td></tr>
+    <tr><td>letters+digits</td><td>Encodings iso88591, iso88593, koi8r, koi8u, utf16le.</td></tr>
+    <tr>
+      <td>dictionary&nbsp;gaps</td>
+      <td>
+        Encodings, programmatically, deallocates, realtime, deduplicate, cancellable,
+        webhooks, backpressure and idempotency are all real English but missing from
+        SCOWL's standard dictionary — covered by the built-in technical term list.
+      </td>
+    </tr>
+    <tr><td>acronym</td><td>The HTTP, JSON and CSS layers.</td></tr>
+    <tr><td>acronym plural</td><td>A set of JavaScript APIs, URLs and IDs.</td></tr>
+    <tr><td>hyphen prefix</td><td>pre-existing workspaces, a pre-filled value, non-blocking re-entry.</td></tr>
+    <tr><td>camelCase</td><td>Call getTooltip and onDidChangeVisibility now.</td></tr>
+    <tr><td>PascalCase</td><td>A Thenable and a WebviewPanel instance.</td></tr>
+    <tr><td>snake_case</td><td>The my_snake_case and max_retry_count fields.</td></tr>
+    <tr><td>tech terms</td><td>The webview returns a readonly Uri; falsy viewport, monorepo, cwd, eol.</td></tr>
+    <tr><td>ordinals</td><td>On the 1st, 2nd, 3rd and 123rd day we shipped v1.0.0.</td></tr>
+    <tr><td>possessive</td><td>The webview's owner and the boys' toys are fine.</td></tr>
+    <tr><td>smart quotes</td><td>It’s the user’s choice, isn’t it?</td></tr>
+  </tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════════════════ ⑦ 已知边界 -->
+<h2>⑦ Scrolling container — the mark must follow AND be clipped</h2>
+<div class="expect">
+  Expected, scrolling <em>inside the box below</em>:
+  <b>(a)</b> the red mark on <code>occurrance</code> moves with the word;
+  <b>(b)</b> as the word scrolls out of the top of the box, the mark is
+  <b>clipped away with it</b> — no red bar may ever appear outside the box;
+  <b>(c)</b> scrolling down, <code>seperator</code> on Line 6 gets its own mark
+  as it comes into view.
+  <br>
+  Took two rounds to get right (2026-08-15). First fix added a capture-phase
+  <code>scroll</code> listener on <code>document</code> so marks reposition —
+  necessary but not sufficient. The marks then correctly followed the text
+  <em>out of the box</em>, because the overlay layer hangs off
+  <code>documentElement</code> and is not clipped by any container's
+  <code>overflow</code>. Second fix: intersect every mark rect with its clipping
+  ancestors and drop what falls outside.
+</div>
+<div style="height:90px;overflow:auto;border:1px solid #dfe3e8;padding:8px">
+  <p>Scroll me: the word occurrance is misspelled on purpose.</p>
+  <p class="filler">Line 2 — padding so the box actually scrolls.</p>
+  <p class="filler">Line 3 — padding.</p>
+  <p class="filler">Line 4 — padding.</p>
+  <p class="filler">Line 5 — padding.</p>
+  <p>Line 6 — a second typo down here, so you can check both ends: <b>seperator</b>.</p>
+</div>
+<p class="filler">
+  Also click the <code>occurrance</code> row in the popup while the box is
+  scrolled away from it — the box itself must scroll back to the word, not just
+  the page.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════ ⑧ 长内容 -->
+<h2>⑧ Page scrolling — highlights must move with the page, never drift</h2>
+<div class="expect">
+  Expected: scroll the whole page up and down; every red mark stays exactly on
+  its word. (Marks are positioned in <em>document</em> coordinates, so the
+  browser scrolls them for free — no scroll listener at all.)
+</div>
+<p class="filler">
+  Filler paragraph so the page is taller than the viewport. The quick brown fox
+  jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The
+  quick brown fox jumps over the lazy dog. The quick brown fox jumps over the
+  lazy dog. The quick brown fox jumps over the lazy dog.
+</p>
+<p class="filler">
+  More filler. Nothing in this paragraph is misspelled, so nothing here should
+  be marked. The quick brown fox jumps over the lazy dog. The quick brown fox
+  jumps over the lazy dog. The quick brown fox jumps over the lazy dog.
+</p>
+<p class="filler">
+  Yet more filler, so that the bottom of the document sits well below the fold.
+  The quick brown fox jumps over the lazy dog. The quick brown fox jumps over
+  the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox
+  jumps over the lazy dog. The quick brown fox jumps over the lazy dog.
+</p>
+<p>One last real typo down here so you can test the popup's jump-to: <b>acknowlegement</b>.</p>
+
+<footer>
+  Test fixture for <b>Offline Spell Check for Web Pages</b>. Not shipped in the
+  extension package (build.py only packages the whitelist).
+  Typo list mirrors <code>spell-probe/recall_probe.mjs</code>, so this page and
+  the automated recall test always agree.
+</footer>
+
+</body>
+</html>

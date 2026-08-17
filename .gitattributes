@@ -1,0 +1,24 @@
+# ⚠️ 换行符归一化 —— 不加这个文件会出真问题
+#
+# Windows 上 git 常开着 core.autocrlf,checkout 时会把 LF 换成 CRLF。
+# 对源码无所谓,但对下面这几个文件是**错的**:
+#
+#   · src/dict/index.aff / index.dic 是**数据文件**。
+#     spell-probe/port_check.mjs 会拿 sha256 跟 node_modules 里的上游
+#     **逐字节**比对 —— 字节一变,新机器 clone 出来跑校验必然失败(误报)。
+#
+#   · 两个 LICENSE.txt 更要紧。词典(dictionary-en, (MIT AND BSD))的
+#     **唯一许可义务**就是把 license 原文照搬进包。字节被 git 改过,
+#     「原文」这个词就说不清了。
+#
+# 所以:这几个按二进制处理(-text),git 永远不动它们一个字节。
+# 其余文本统一 eol=lf,免得工作副本和仓库之间反复 churn。
+
+* text=auto eol=lf
+
+src/dict/index.aff              -text
+src/dict/index.dic              -text
+src/dict/DICTIONARY-LICENSE.txt -text
+src/nspell/NSPELL-LICENSE.txt   -text
+
+*.png binary

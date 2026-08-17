@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<!--
+  popup/popup.html — 工具栏弹窗
+  MV3 的 CSP 禁止内联脚本和内联样式,所以 JS/CSS 都是独立文件。
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="dot"></span>
+      <span class="name">Offline Spell Check</span>
+    </div>
+    <button id="rescan" class="ghost" title="Scan this page again">Re-scan</button>
+  </header>
+
+  <div id="status" class="status">Scanning…</div>
+
+  <div id="summary" class="summary hidden">
+    <div class="stat">
+      <b id="n-issues">0</b>
+      <span>misspelled</span>
+    </div>
+    <div class="stat">
+      <b id="n-attr">0</b>
+      <span>in attributes</span>
+    </div>
+    <div class="stat">
+      <b id="n-checked">0</b>
+      <span>words checked</span>
+    </div>
+  </div>
+
+  <div id="list" class="list"></div>
+
+  <div id="empty" class="empty hidden">
+    <div class="big">No misspelled words found.</div>
+    <div class="sub" id="empty-sub"></div>
+  </div>
+
+  <footer>
+    <div class="row">
+      <button id="clear" class="ghost">Clear highlights</button>
+      <span id="timing" class="timing"></span>
+    </div>
+    <!--
+      期望管理写在使用现场,不只写在商店页。
+      实测:真词错误(form→from / there→their / lose→loose)0/6,纯词典方案原理上抓不到。
+      在位者被骂 "Misses basic spelling mistakes" 有一部分就是这个预期差造成的。
+    -->
+    <div class="caveat">
+      Finds misspelled words only — not grammar, and not real-word mix-ups
+      like <i>form</i> / <i>from</i>.
+    </div>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
