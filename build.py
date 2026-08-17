@@ -109,6 +109,10 @@ PLACEHOLDER_PATTERNS = [
 
 TEXT_EXTS = {".json", ".js", ".html", ".css", ".md", ".txt"}
 
+# 闸 ⑤ 找的标记。出商店截图时会在 popup/popup.js 里临时写死 SHOW_TIMING=false,
+# 那个改动带着这个标记 —— 只要它还在包里就不许打包。
+SCREENSHOT_OVERRIDE_MARK = "__SCREENSHOT_OVERRIDE__"
+
 DESCRIPTION_LIMIT = 132   # Chrome Web Store manifest.description 上限
 NAME_LIMIT = 75           # manifest.name 上限
 
@@ -211,6 +215,31 @@ def main() -> None:
         problems.append(f"src/dict/index.dic 只有 {dic_size:,} 字节，正常约 551,762。")
     if aff_size < 2_000:
         problems.append(f"src/dict/index.aff 只有 {aff_size:,} 字节，正常约 3,086。")
+
+    # ---- 闸 ⑤：截图用的临时改动没改回来
+    # 出商店截图时会把 popup 的 SHOW_TIMING 临时写死成 false（好让耗时明细不入镜）。
+    # 那是**临时**的，忘了改回来就等于把开发诊断入口永久关掉。
+    # 「临时的东西跟着交上去」正是上一个扩展 YOUR_GITHUB_USERNAME 那一类错误，
+    # 靠记性防不住，只能靠机器拦。
+    override_hits = []
+    for p in INCLUDE:
+        if os.path.splitext(p)[1].lower() not in TEXT_EXTS:
+            continue
+        with open(p, encoding="utf-8", errors="replace") as f:
+            for lineno, line in enumerate(f, 1):
+                if SCREENSHOT_OVERRIDE_MARK in line:
+                    override_hits.append(f"{p}:{lineno}")
+    if override_hits:
+        problems.append(
+            "包里还留着**截图用的临时改动**：\n    "
+            + "\n    ".join(override_hits)
+            + "\n\n    改回来的方法：把 popup/popup.js 里那个标记注释块连同\n"
+            "      const SHOW_TIMING = false;\n"
+            "    一起删掉，恢复成：\n"
+            "      const SHOW_TIMING = !('update_url' in chrome.runtime.getManifest());\n"
+            "    （商店安装的扩展 getManifest() 里才有 update_url，解压加载的没有，\n"
+            "     所以那一行本身就已经做到「用户看不见、开发看得见」。）"
+        )
 
     if problems:
         raise SystemExit("[FAIL] 打包被拦下：\n\n  " + "\n\n  ".join(problems) + "\n")
