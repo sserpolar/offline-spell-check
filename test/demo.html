@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- The only typo in <head>: "Dashbord". It shows up in the browser tab, never on
+     the page, so it can only be caught by the attribute/<title> scan. That is the
+     whole point of screenshot 2. -->
+<title>Release notes — Beacon Dashbord</title>
+<link rel="icon" href="demo-icon.svg">
+<style>
+  :root {
+    --ink: #1c2029; --ink-2: #414a59; --ink-3: #6b7382;
+    --line: #e3e6ec; --line-2: #eef0f4; --bg-soft: #f7f8fa;
+    --accent: #3b6fd4; --accent-soft: #eef2fb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--ink); background: #fff;
+    font: 16.5px/1.72 -apple-system, "Segoe UI", system-ui, Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ---------------------------------------------------------------- top bar */
+  .topbar {
+    display: flex; align-items: center; gap: 26px;
+    padding: 0 30px; height: 56px;
+    border-bottom: 1px solid var(--line); background: #fff;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 650; font-size: 16px; }
+  .brand .dot { width: 13px; height: 13px; border-radius: 50%; background: var(--accent); }
+  .brand .muted { color: var(--ink-3); font-weight: 400; }
+  .topnav ul { display: flex; gap: 22px; list-style: none; margin: 0; padding: 0; font-size: 14.5px; }
+  .topnav a { color: var(--ink-2); }
+  .topnav .on { color: var(--ink); font-weight: 600; box-shadow: inset 0 -2px 0 var(--accent); padding-bottom: 3px; }
+  .spacer { flex: 1; }
+  .ver { font-size: 13px; color: var(--accent); background: var(--accent-soft);
+         border: 1px solid #c9d7f2; border-radius: 20px; padding: 2px 11px; }
+
+  /* ---------------------------------------------------------------- banner */
+  .banner {
+    background: var(--accent-soft); border-bottom: 1px solid #d9e3f7;
+    padding: 11px 30px; font-size: 14.5px; color: #24365c;
+  }
+
+  /* ---------------------------------------------------------------- layout */
+  .wrap {
+    display: grid; grid-template-columns: 240px minmax(0, 1fr) 232px;
+    gap: 38px; max-width: 1500px; margin: 0 auto; padding: 28px 30px 70px;
+  }
+  /* sticky like every real docs site — also means a scrolled screenshot never
+     shows an empty left column */
+  .side, .rail { position: sticky; top: 22px; align-self: start; }
+  .side ul { list-style: none; margin: 0 0 20px; padding: 0; font-size: 14.5px; }
+  .side li { margin: 5px 0; }
+  .side a { color: var(--ink-2); }
+  .side .on { color: var(--accent); font-weight: 600; }
+  .side .grp { font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase;
+               color: var(--ink-3); font-weight: 700; margin: 22px 0 7px; }
+  .rail { font-size: 14px; }
+  .rail .grp { font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase;
+               color: var(--ink-3); font-weight: 700; margin: 4px 0 9px; }
+  .rail ul { list-style: none; margin: 0; padding: 0; }
+  .rail li { margin: 7px 0; border-left: 2px solid var(--line-2); padding-left: 11px; }
+  .rail a { color: var(--ink-3); }
+
+  /* ---------------------------------------------------------------- article */
+  h1 { font-size: 33px; line-height: 1.25; margin: 2px 0 8px; letter-spacing: -.015em; }
+  h2 { font-size: 22px; margin: 40px 0 10px; padding-top: 18px; border-top: 1px solid var(--line-2); }
+  h3 { font-size: 17px; margin: 26px 0 8px; }
+  p { margin: 0 0 15px; }
+  .meta { color: var(--ink-3); font-size: 14.5px; margin-bottom: 26px; }
+  ul.fixes { margin: 0 0 16px; padding-left: 22px; }
+  ul.fixes li { margin: 8px 0; }
+
+  figure { margin: 22px 0; }
+  figure img { display: block; width: 100%; max-width: 760px; height: auto;
+               border: 1px solid var(--line); border-radius: 7px; background: #fff; }
+  figcaption { color: var(--ink-3); font-size: 14px; margin-top: 9px; }
+
+  pre { background: #f6f7f9; border: 1px solid var(--line); border-radius: 7px;
+        padding: 15px 17px; overflow-x: auto; margin: 16px 0; }
+  code { font: 14px/1.6 "Cascadia Mono", Consolas, ui-monospace, monospace; }
+  p code, td code, li code { background: var(--bg-soft); border: 1px solid var(--line-2);
+        border-radius: 4px; padding: 1px 5px; font-size: 14px; }
+  .codehead { display: flex; align-items: center; justify-content: space-between;
+              margin: 18px 0 -6px; }
+  .codehead .fname { font: 13.5px "Cascadia Mono", Consolas, ui-monospace, monospace; color: var(--ink-3); }
+  .copy { font-size: 13px; color: var(--ink-2); background: #fff;
+          border: 1px solid var(--line); border-radius: 5px; padding: 3px 11px; cursor: pointer; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; margin: 14px 0 4px; }
+  th, td { border-bottom: 1px solid var(--line-2); padding: 9px 12px; text-align: left; }
+  th { background: var(--bg-soft); border-bottom: 1px solid var(--line);
+       font-size: 13px; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-2); }
+  td:first-child { font: 14px "Cascadia Mono", Consolas, ui-monospace, monospace; }
+
+  .callout { background: var(--bg-soft); border-left: 3px solid #b9c4d6;
+             border-radius: 0 6px 6px 0; padding: 14px 18px; margin: 18px 0; }
+  .callout h3 { margin: 0 0 6px; font-size: 16px; }
+  .callout p { margin: 0; font-size: 15.5px; color: var(--ink-2); }
+  .langs { font-size: 14.5px; color: var(--ink-3); }
+
+  /* feedback card — the four attribute typos live here and in the figure above */
+  .helpful { position: relative; border: 1px solid var(--line); border-radius: 8px;
+             padding: 17px 20px 19px; margin: 26px 0 6px; background: #fcfcfd; }
+  .helpful h3 { margin: 0 0 5px; font-size: 17px; }
+  .helpful p { margin: 0 0 13px; color: var(--ink-2); font-size: 15px; }
+  .helpful .row { display: flex; gap: 10px; align-items: center; }
+  .helpful input { flex: 0 1 340px; font-size: 15px; padding: 8px 11px;
+                   border: 1px solid #cfd5de; border-radius: 6px; }
+  .helpful .send { font-size: 15px; padding: 8px 18px; border: 0; border-radius: 6px;
+                   background: var(--accent); color: #fff; cursor: pointer; }
+  .helpful .hint { display: inline-block; margin-top: 12px; font-size: 13.5px;
+                   color: var(--ink-3); border-bottom: 1px dotted #b6bcc7; cursor: help; }
+  .helpful .x { position: absolute; top: 9px; right: 11px; width: 27px; height: 27px;
+                font-size: 19px; line-height: 1; color: var(--ink-3);
+                background: transparent; border: 0; border-radius: 5px; cursor: pointer; }
+
+  footer { border-top: 1px solid var(--line); background: var(--bg-soft);
+           padding: 20px 30px; font-size: 13.5px; color: var(--ink-3); }
+  footer ul { display: flex; gap: 18px; list-style: none; margin: 7px 0 0; padding: 0; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="dot"></span> Beacon <span class="muted">Documentation</span></div>
+  <nav class="topnav">
+    <ul>
+      <li><a href="#">Guides</a></li>
+      <li><a href="#">Reference</a></li>
+      <li><a href="#" class="on">Release notes</a></li>
+      <li><a href="#">Support</a></li>
+    </ul>
+  </nav>
+  <span class="spacer"></span>
+  <span class="ver">v4.2</span>
+</header>
+
+<div class="banner">
+  <strong>4.2 is generally available.</strong>
+  It reaches every workspace over the next few days. Nothing to install.
+</div>
+
+<div class="wrap">
+
+  <!-- Left navigation. <nav> is skipped by design, so a docs tree never turns
+       into a wall of red marks. -->
+  <nav class="side">
+    <div class="grp">Release notes</div>
+    <ul>
+      <li><a href="#" class="on">4.2 — August 2026</a></li>
+      <li><a href="#">4.1 — June 2026</a></li>
+      <li><a href="#">4.0 — March 2026</a></li>
+      <li><a href="#">3.9 — January 2026</a></li>
+    </ul>
+    <div class="grp">Guides</div>
+    <ul>
+      <li><a href="#">Getting started</a></li>
+      <li><a href="#">Building a report</a></li>
+      <li><a href="#">Scheduled exports</a></li>
+      <li><a href="#">Sharing and access</a></li>
+      <li><a href="#">Single sign-on</a></li>
+    </ul>
+    <div class="grp">Reference</div>
+    <ul>
+      <li><a href="#">Configuration file</a></li>
+      <li><a href="#">Query API</a></li>
+      <li><a href="#">Webhooks</a></li>
+      <li><a href="#">Rate limits</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Beacon 4.2 — release notes</h1>
+    <p class="meta">August 17, 2026 · 4 minute read · <a href="#">Subscribe to the changelog</a></p>
+
+    <h2 id="highlights">Highlights</h2>
+    <p>
+      The report builder no longer waits for a seperate warm-up pass. The first
+      chart on a cold workspace paints in about a third of the time it used to,
+      and the loading state is gone for anything under half a second.
+    </p>
+    <p>
+      Scheduled exports run on their own worker. That was neccessary before we
+      could raise the row limit, and it also keeps a slow export from holding up
+      the live query path while people are reading a report.
+    </p>
+    <p>
+      Saved views follow the person, not the browser. Sign in from a second
+      machine and you recieve the same layout, the same filters and the same
+      date range.
+    </p>
+
+    <h2 id="builder">The report builder</h2>
+    <p>
+      Columns, filters and grouping now live in one panel instead of three. The
+      panel remembers the last five fields you used, so building a second
+      version of a report takes a handful of clicks.
+    </p>
+
+    <figure>
+      <img src="demo-chart.svg" width="760" height="280"
+           alt="Screnshot of the report builder with the new column panel">
+      <figcaption>
+        Sessions by week, built in the new panel. Charts render from the same
+        query the table uses, so the two can never disagree.
+      </figcaption>
+    </figure>
+
+    <aside class="helpful">
+      <button class="x" type="button" aria-label="Close the dailog">×</button>
+      <h3>Was this page helpful?</h3>
+      <p>The documentation team reads every note. Bug reports belong in the tracker.</p>
+      <div class="row">
+        <input type="text" placeholder="Tell us what was mising">
+        <button type="button" class="send">Send</button>
+      </div>
+      <span class="hint" title="Notes are anonymous — we never store your adress">Anonymous</span>
+    </aside>
+
+    <h2 id="config">Configuration</h2>
+    <p>
+      Export destinations moved into <code>beacon.yml</code>. The old environment
+      variables still work in 4.2 and print a warning on start.
+    </p>
+    <div class="codehead">
+      <span class="fname">beacon.yml</span>
+      <button class="copy" type="button">Copy</button>
+    </div>
+<pre><code>export:
+  destination: s3://reports-eu-west-1/beacon
+  format: csv
+
+cache:
+  # Warm the cache on boot so the first query does not pay for a cold index.
+  # If a timeout occurance shows up in the log, raise the retreive budget.
+  warm_on_boot: true
+  retreive_budget_ms: 250</code></pre>
+
+    <h3>Settings on the way out</h3>
+    <p>
+      These still work in 4.2 and print a warning. They come out on the
+      versions below.
+    </p>
+    <table>
+      <thead>
+        <tr><th>Setting</th><th>Use instead</th><th>Removed in</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>export.retryLimit</td><td>export.retries</td><td>v4.6</td></tr>
+        <tr><td>BEACON_CACHE_TTL</td><td>cache.ttlSeconds</td><td>v4.6</td></tr>
+        <tr><td>src/config/legacy.yml</td><td>src/config/export.yml</td><td>v4.8</td></tr>
+        <tr><td>/api/v1/reports</td><td>/api/v2/reports</td><td>v5.0</td></tr>
+        <tr><td>Weekly digest email</td><td>Scheduled export</td><td>v5.0</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="fixes">Fixes</h2>
+    <ul class="fixes">
+      <li>A crash occured when two people renamed the same folder in the same second.</li>
+      <li>The date picker is definately faster on long ranges. It no longer rebuilds the grid on every click.</li>
+      <li>Weekly digests went out at the begining of the week for workspaces outside Europe.</li>
+      <li>Column widths survive a reload again.</li>
+      <li>A share link stopped working for people who had never opened the report. It works now.</li>
+    </ul>
+
+    <h2 id="localized">Localized notes</h2>
+    <p>
+      The German summary below is written by our team in Berlin. Only the
+      English page is updated on release day.
+    </p>
+    <aside class="callout" lang="de">
+      <h3>Hinweis für Kunden in der EU</h3>
+      <p>
+        Berichte werden ab dieser Version standardmäßig in der Region
+        gespeichert, in der Ihr Arbeitsbereich angelegt wurde. Bestehende
+        Exporte bleiben unverändert, bis Sie die Einstellungen selbst ändern.
+      </p>
+    </aside>
+    <p class="langs">
+      Also available in
+      <a href="#" lang="de">Deutsch</a> ·
+      <a href="#" lang="es">Español</a> ·
+      <a href="#" lang="pt">Português do Brasil</a> ·
+      <a href="#" lang="fr">Français</a> ·
+      <a href="#" lang="ja">日本語</a>
+    </p>
+
+    <h2 id="upgrade">Upgrade notes</h2>
+    <p>
+      Nothing to install. The switch happens during your next maintainance
+      window and takes under a minute. Reports stay readable while it runs.
+    </p>
+    <p>
+      Column names are compared in a consistant way from 4.2 on, so a view that
+      was saved last year may sort in a new order the first time you open it.
+      Save the view once and the order sticks.
+    </p>
+    <p>
+      Running Beacon behind a proxy? Add the new export host to your allowlist
+      before you upgrade, or scheduled exports will queue.
+    </p>
+  </main>
+
+  <!-- Right rail. Also <nav>, also skipped. -->
+  <nav class="rail">
+    <div class="grp">On this page</div>
+    <ul>
+      <li><a href="#highlights">Highlights</a></li>
+      <li><a href="#builder">The report builder</a></li>
+      <li><a href="#config">Configuration</a></li>
+      <li><a href="#fixes">Fixes</a></li>
+      <li><a href="#localized">Localized notes</a></li>
+      <li><a href="#upgrade">Upgrade notes</a></li>
+    </ul>
+  </nav>
+
+</div>
+
+<footer>
+  © 2026 Beacon
+  <ul>
+    <li><a href="#">Status</a></li>
+    <li><a href="#">Terms</a></li>
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+</footer>
+
+</body>
+</html>

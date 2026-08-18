@@ -25,6 +25,7 @@
  */
 
 import NSpell from './src/nspell/index.js';
+import { buildSuggestions } from './shared/suggest.js';
 
 // ---------------------------------------------------------------- 词典生命周期
 
@@ -128,12 +129,17 @@ async function checkWords(words) {
  * 拼写建议 —— **只按需调用**。
  * suggest() 比 correct() 贵得多(要生成编辑距离 1~2 的全部候选再逐个查表),
  * 所以绝不在扫描时给所有错词预先算建议:用户点了哪个词才算哪个。
+ *
+ * ⭐ 补齐逻辑(换位 + 距离 2 兜底)在 `shared/suggest.js` —— **那是单一真源**,
+ *    `spell-probe/suggest_probe.mjs` import 的是同一个文件,所以实测量的字节
+ *    就是这里跑的字节。为什么需要那两层、为什么 ② 只在返回空时才跑、
+ *    369ms 是怎么来的,全写在那个文件头部,别在这里重复一份。
  */
 async function suggestFor(word) {
   const { spell } = await getDictionary();
   const t0 = performance.now();
-  const suggestions = spell.suggest(word).slice(0, 6);
-  return { suggestions, ms: Math.round(performance.now() - t0) };
+  const { suggestions, deepRan } = buildSuggestions(spell, word);
+  return { suggestions, deepRan, ms: Math.round(performance.now() - t0) };
 }
 
 chrome.runtime.onMessage.addListener((msg, _sender, respond) => {

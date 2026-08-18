@@ -50,6 +50,9 @@ INCLUDE = [
     "background.js",
     # 过滤逻辑单一真源：service worker 不用它，content script 当 classic script 注入
     "shared/pipeline.js",
+    # 建议补齐单一真源：service worker 直接 ESM import（background.type = module）
+    # ⚠️ 漏了这个 = 装上后一点高亮就报错，而扫描本身是好的 —— 最难查的那种坏法
+    "shared/suggest.js",
     "content/scan.js",
     "popup/popup.html",
     "popup/popup.css",
@@ -138,6 +141,10 @@ def check_placeholders(paths):
 
 
 def main() -> None:
+    # 先报这个：它跟打包成不成功无关，而且打包被闸拦下时你**更**需要看到它
+    # （2026-08-17 就撞上过：闸 ⑤ 正拦着，而扩展同时装不进 Chrome）。
+    check_unpacked_loadable()
+
     with open("manifest.json", encoding="utf-8") as f:
         manifest = json.load(f)
 
@@ -263,6 +270,37 @@ def main() -> None:
         print("   contents:")
         for n in sorted(z.namelist()):
             print(f"     {n}")
+
+
+def check_unpacked_loadable():
+    """提醒 ⑥：解压加载（chrome://extensions → 加载已解压）会失败的东西。
+
+    ⚠️ 这**不是打包闸**，是提醒 —— zip 只装 INCLUDE 白名单里那 18 个文件，
+       所以这些垃圾永远进不了提交包，`raise` 是不对的。
+       但 `chrome://extensions` 的「加载已解压」读的是**整个目录**，Chrome 对
+       顶层带 `_` 前缀的条目会直接拒绝：
+
+         Cannot load extension with file or directory name __pycache__.
+         Filenames starting with "_" are reserved for use by the system.
+         Could not load manifest.
+
+    2026-08-17 实撞:拿 importlib 加载 make_store_screenshots.py 做裁切测试，
+    Python 顺手在扩展根目录写了 `__pycache__/` —— 于是**扩展装不进去了**，
+    而报错说的是 "Could not load manifest"，看着像 manifest.json 坏了，
+    完全指错了方向。`.gitignore` 里早有 `__pycache__/`，所以 git 一声不响。
+
+    ⇒ 只要跑过任何会 import 本目录 .py 文件的命令，就可能复现。
+       想彻底免疫:那类命令前面加 `PYTHONDONTWRITEBYTECODE=1`。
+    """
+    bad = sorted(n for n in os.listdir(".") if n.startswith("_"))
+    if bad:
+        print()
+        print("[!] 解压加载会失败 —— 顶层有 Chrome 保留的 `_` 前缀条目：")
+        for n in bad:
+            print(f"      {n}")
+        print("    Chrome 会报 `Could not load manifest.`（**指错方向**，manifest 没坏）。")
+        print("    删掉即可，提交包不受影响（zip 只装 INCLUDE 白名单）。")
+        print("    多半是 __pycache__：跑 python 前加 PYTHONDONTWRITEBYTECODE=1 可免疫。")
 
 
 if __name__ == "__main__":
