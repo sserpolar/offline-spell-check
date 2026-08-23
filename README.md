@@ -4,6 +4,12 @@ A Chrome / Edge extension (Manifest V3) that finds misspelled words on any web p
 using a **bundled dictionary**. No network requests, no account, no ads, no tracking.
 Two permissions: `activeTab` and `scripting`.
 
+## Install
+
+- **Chrome** — [Chrome Web Store](https://chromewebstore.google.com/detail/offline-spell-check-for-w/degpnnjbkannnfpcdlppeiheiheoglen)
+- **Edge** — [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/offline-spell-check-for-w/adnhfnifclidonodinohjolbcpiipoep)
+- **Firefox** — not published yet
+
 ---
 
 ## What it does
@@ -36,15 +42,16 @@ It also does not rewrite text, suggest phrasing, or generate anything.
 ## Architecture
 
 ```
-manifest.json          MV3. permissions: activeTab + scripting. No content_scripts.
-background.js          Service worker — the ONLY holder of the dictionary
+manifest.json          MV3 for Chrome/Edge. activeTab + scripting. No content_scripts.
+manifest.firefox.json  MV3 for Firefox — event page instead of service worker
+background.js          Service worker (event page on Firefox) — the ONLY holder of the dictionary
 shared/pipeline.js     ⭐ Single source of truth for all filtering rules
 content/scan.js        DOM walk + word collection + highlight overlay (no dictionary)
 popup/                 Trigger, result list, suggestions, timing readout
 src/nspell/            nspell 2.1.5 ported CJS → ESM by hand (MIT)
 src/dict/              index.aff + index.dic + licence (SCOWL en_US)
 test/testpage.html     Self-checking fixture — every section states what should happen
-build.py               Whitelist packaging + 4 hard gates
+build.py               Whitelist packaging, two targets, 7 hard gates
 make_icons.py          Icons from geometry only, no font dependency
 ```
 
@@ -122,13 +129,21 @@ built-in checker — that silently kills every link on the page. This one:
 ## Development
 
 ```bash
-# package for the store (runs 4 hard gates first)
-python build.py          # -> dist/offline-spell-check-for-web-pages-v1.0.0.zip
+# package for the stores (runs the hard gates first, both targets)
+python build.py          # -> dist/offline-spell-check-for-web-pages-v1.0.0.zip          (Chrome/Edge)
+                         # -> dist/offline-spell-check-for-web-pages-v1.0.0-firefox.zip  (AMO)
+                         # existing zips are never overwritten; name a target to rebuild:
+python build.py firefox
 
 # regenerate icons
 python make_icons.py
 
 # load unpacked: chrome://extensions -> Developer mode -> Load unpacked -> this folder
+#
+# on Firefox: about:debugging#/runtime/this-firefox -> Load Temporary Add-on ->
+#   pick the *-firefox.zip, NOT this folder. The manifest.json sitting here declares
+#   background.service_worker, which Firefox rejects; the Firefox manifest is a
+#   separate file and only ends up named manifest.json inside its own zip.
 
 # serve the self-checking test page
 cd test && python -m http.server 8765   # -> http://localhost:8765/testpage.html
