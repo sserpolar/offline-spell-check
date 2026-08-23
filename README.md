@@ -10,6 +10,11 @@ Two permissions: `activeTab` and `scripting`.
 - **Edge** — [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/offline-spell-check-for-w/adnhfnifclidonodinohjolbcpiipoep)
 - **Firefox** — not published yet
 
+Measured false-positive rate **0.05%** on ~65,000 words of real technical
+documentation, with **100% recall on non-word errors** (18/18). Full numbers,
+method, and one optimization that was tested and rejected:
+[BENCHMARK.md](BENCHMARK.md).
+
 ---
 
 ## What it does
@@ -33,7 +38,8 @@ mistake that is itself a real word:
 ```
 
 Judging those needs to understand the sentence, not the word. Any dictionary-based
-checker — including Chrome's own — misses them. Measured: 0/6.
+checker — including Chrome's own — misses them. Measured: 0/6, see
+[BENCHMARK.md](BENCHMARK.md#recall).
 
 It also does not rewrite text, suggest phrasing, or generate anything.
 
