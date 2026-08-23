@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Offline Spell Check for Web Pages",
+  "version": "1.0.0",
+  "description": "Finds misspelled words on any web page. Works 100% offline. No account, no ads, no tracking, no data leaves your browser.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "offline-spell-check@sserpolar.github.io",
+      "strict_min_version": "112.0"
+    }
+  },
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Spell-check this page (offline)"
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "type": "module"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "homepage_url": "https://github.com/sserpolar/offline-spell-check"
+}
