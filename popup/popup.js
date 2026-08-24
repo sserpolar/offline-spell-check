@@ -40,8 +40,17 @@ const els = {
 
 let tabId = null;
 
-/** 注入的两个文件。顺序有意义:pipeline.js 先挂 globalThis.SpellPipeline。 */
-const FILES = ['shared/pipeline.js', 'content/scan.js'];
+/**
+ * 注入的两个文件。顺序有意义:pipeline.js 先挂 globalThis.SpellPipeline。
+ *
+ * ⚠️ **必须是前导 `/` 的根绝对路径。** 2026-08-24 在真 Firefox 里踩到:
+ * 写成相对路径 `'content/scan.js'` 时,Firefox 把它按**调用方文档**(popup/popup.html)
+ * 解析成 `moz-extension://<id>/popup/content/scan.js` —— 那个文件不存在,
+ * 报出来的错还是含混的 `result is non-structured-clonable data`,不是「文件找不到」。
+ * Chrome 是按扩展根解析的,所以这个差异在 Chrome 上永远暴露不出来。
+ * 前导 `/` 在两个浏览器里都明确表示扩展根,是唯一两边都对的写法。
+ */
+const FILES = ['/shared/pipeline.js', '/content/scan.js'];
 const MY_VERSION = chrome.runtime.getManifest().version;
 
 /**
