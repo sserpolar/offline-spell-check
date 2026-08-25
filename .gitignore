@@ -19,3 +19,6 @@ HANDOFF_PROMPT.md
 STORE_LISTING.md
 STORE_LISTING_EDGE.md
 SUBMIT_CHECKLIST.md
+
+# probe/ 的依赖:用 `cd probe && npm install` 装,不进仓库
+probe/node_modules/

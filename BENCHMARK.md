@@ -189,15 +189,33 @@ The full licence text ships inside the extension.
 
 ## Reproducing this
 
-The measurements come from a set of standalone probe scripts — false-positive
-rate, recall, suggestion quality, dictionary load cost, and a dictionary-gap
-tool — run against the extension's own filtering logic, which is the single
-source of truth shared by the harness and the shipped code.
+Every number above comes from a script in [`probe/`](probe/), and those scripts
+import [`shared/pipeline.js`](shared/pipeline.js) — **the same file the shipped
+extension loads into the page.** The filtering logic is not reimplemented for
+measurement, so the bytes measured and the bytes shipped are the same bytes.
 
-**The harness is not published yet.** The corpus is listed above so the
-false-positive and recall figures can be reproduced independently; the
-browser-side timings come from instrumentation in the extension itself, visible
-in the popup during development.
+```sh
+cd probe
+npm install
+npm run recall   # reproduces the recall table above, offline
+npm run port     # diffs the hand-ported ESM nspell against upstream, offline
+npm run fp       # the false-positive rate; fetches the four pages listed above
+```
+
+`npm run recall` should print `18/18` non-word, `0/6` real-word, `0/2` inside
+code blocks and `4/4` on attributes — the recall section of this document.
+
+Two honest caveats:
+
+- **`fp_probe` fetches the four documentation pages live** rather than shipping
+  a frozen copy, so its exact figure drifts as those pages are edited. The
+  0.05% above is a measurement taken on a specific day, not a constant.
+- **The browser-side timings cannot be reproduced by the harness at all.** They
+  come from instrumentation inside the extension, visible in the popup during
+  development. That gap is the subject of the lab-versus-browser table above,
+  and it is the reason the harness was not trusted on its own.
+
+See [`probe/README.md`](probe/README.md) for what each script does.
 
 ---
 

@@ -1,0 +1,21 @@
+{
+  "name": "offline-spell-check-probe",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Measurement harness for the Offline Spell Check for Web Pages extension. Runs the extension's own filtering logic against real documentation pages.",
+  "license": "MIT",
+  "scripts": {
+    "fp": "node fp_probe.mjs",
+    "recall": "node recall_probe.mjs",
+    "suggest": "node suggest_probe.mjs",
+    "load": "node load_probe.mjs",
+    "port": "node port_check.mjs",
+    "tokens": "node tokens_check.mjs",
+    "dictgap": "node dict_gap.mjs"
+  },
+  "dependencies": {
+    "dictionary-en": "^4.0.0",
+    "nspell": "^2.1.5"
+  }
+}
