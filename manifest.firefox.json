@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Offline Spell Check for Web Pages",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Finds misspelled words on any web page. Works 100% offline. No account, no ads, no tracking, no data leaves your browser.",
   "browser_specific_settings": {
     "gecko": {

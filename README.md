@@ -136,8 +136,8 @@ built-in checker — that silently kills every link on the page. This one:
 
 ```bash
 # package for the stores (runs the hard gates first, both targets)
-python build.py          # -> dist/offline-spell-check-for-web-pages-v1.0.0.zip          (Chrome/Edge)
-                         # -> dist/offline-spell-check-for-web-pages-v1.0.0-firefox.zip  (AMO)
+python build.py          # -> dist/offline-spell-check-for-web-pages-v<version>.zip          (Chrome/Edge)
+                         # -> dist/offline-spell-check-for-web-pages-v<version>-firefox.zip  (AMO)
                          # existing zips are never overwritten; name a target to rebuild:
 python build.py firefox
 
