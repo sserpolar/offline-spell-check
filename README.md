@@ -1,14 +1,14 @@
 # Offline Spell Check for Web Pages
 
-A Chrome / Edge extension (Manifest V3) that finds misspelled words on any web page
-using a **bundled dictionary**. No network requests, no account, no ads, no tracking.
-Two permissions: `activeTab` and `scripting`.
+A Chrome / Edge / Firefox extension (Manifest V3) that finds misspelled words on any
+web page using a **bundled dictionary**. No network requests, no account, no ads, no
+tracking. Two permissions: `activeTab` and `scripting`.
 
 ## Install
 
 - **Chrome** — [Chrome Web Store](https://chromewebstore.google.com/detail/offline-spell-check-for-w/degpnnjbkannnfpcdlppeiheiheoglen)
 - **Edge** — [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/offline-spell-check-for-w/adnhfnifclidonodinohjolbcpiipoep)
-- **Firefox** — not published yet
+- **Firefox** — [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/offline-spell-check/) (Firefox 112+)
 
 Measured false-positive rate **0.05%** on ~65,000 words of real technical
 documentation, with **100% recall on non-word errors** (18/18). Full numbers,
