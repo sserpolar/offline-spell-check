@@ -106,17 +106,47 @@ function setStatus(text, kind) {
 
 function fmt(n) { return Number(n).toLocaleString('en-US'); }
 
-/** 把 Chrome 的原始错误翻成人话 */
+/**
+ * 把浏览器的原始错误翻成人话。
+ *
+ * ⚠️ **必须同时认 Chrome 和 Firefox 两套措辞。** 2026-08-28 在**上架的正式版**上踩到:
+ * 在受限页面(当时是 AMO 自己的页面)点图标,Firefox 抛的是
+ * `Missing host permission for the tab` —— 下面原来的正则**一条都匹配不上**,
+ * 于是原样漏到界面上,用户看到的字面是「缺少 host 权限」。
+ * ⛔ **这跟本扩展的核心卖点正好相反**(不申请 host permissions、
+ * 安装时不出现「读取您在所有网站上的数据」),最容易被读成「权限没给全 / 坏了」→ 一星。
+ * Chrome 在同类页面上抛的是完全不同的话(`Cannot access a chrome:// URL` /
+ * `The extensions gallery cannot be scripted.`),所以这个漏洞**只有 Firefox 能暴露**。
+ *
+ * ⚠️ **文案里不许写死浏览器名。** 同一批字节在 Chrome / Edge / Firefox 三家跑,
+ * 原来那句 "Chrome does not allow…" 在 Edge 和 Firefox 用户眼里是别人家的浏览器。
+ * 现在的写法**正反都说**:能用的是普通 http(s) 页,不能用的是浏览器自己的页面 /
+ * 扩展页 / 各家的扩展商店 —— 用户看完不需要再猜。
+ *
+ * ⚠️ **`file://` 那条必须排在受限页面之前。** Chrome 的 file 错误里带 `file://` 字样,
+ * 但 Firefox 的 file 错误很可能同样只说 `Missing host permission for the tab` ——
+ * 顺序反了会把「文件访问没开」误报成「这类页面一律不让跑」,把可解决的问题说成死路。
+ */
 function friendlyError(msg) {
   const m = String(msg || '');
-  if (/chrome:\/\/|extension gallery|Extensions gallery|chrome-extension:\/\/|Cannot access a chrome/i.test(m)) {
-    return 'Chrome does not allow extensions to run on this page (browser pages, the Web Store and other extensions).';
-  }
+
+  // ① 本地文件 —— 必须排在 ② 之前(见上面注释)
   if (/file:\/\//i.test(m)) {
-    return 'For local files, turn on "Allow access to file URLs" on this extension\'s details page.';
+    return 'Local files are not checked unless you allow it: open this extension\'s ' +
+           'details page and turn on access to file URLs.';
   }
+
+  // ② 浏览器不许任何扩展碰的页面。Chrome / Edge / Firefox 三套措辞都收在这里。
+  //    Chrome/Edge: "Cannot access a chrome:// URL" · "The extensions gallery cannot be scripted."
+  //    Firefox:     "Missing host permission for the tab"(about: 页面与 AMO 等受限域都是这句)
+  if (/chrome:\/\/|edge:\/\/|about:[a-z]|chrome-extension:\/\/|moz-extension:\/\/|extensions? gallery|Cannot access a chrome|Missing host permission/i.test(m)) {
+    return 'Only ordinary http:// and https:// pages can be checked. Browsers block every ' +
+           'extension on their own pages, on extension pages and in their add-on stores — ' +
+           'this page is one of those.';
+  }
+
   if (/Cannot access contents/i.test(m)) {
-    return 'This page cannot be read. Try a normal http(s) page.';
+    return 'This page cannot be read. Try an ordinary http:// or https:// page.';
   }
   if (/Receiving end does not exist/i.test(m)) {
     return 'Reload the page once (the extension was just installed or updated), then try again.';
