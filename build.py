@@ -21,7 +21,8 @@ Firefox 侧 `strict_min_version = "112.0"` 的下界推导（三个门槛取最�
    · MV3 + chrome.* 返回 Promise                     FF 109
    · background.type = "module"（bugzilla 1811443）  FF 112  ← 卡住的就是这条
 
-改自 ext-template/build.py。相对模板加了四道闸（都是踩过的坑变成的）：
+改自 ext-template/build.py。相对模板加了七道闸（都是踩过的坑变成的）。
+最早落地的是 ①–④：
 
   ① 占位符硬闸 —— 包里只要还残留 `YOUR_`、`{{`、`TODO:` 就直接打不出包。
      ⚠️ 这条是有血的：上一个扩展 `Right-Click Search for DevDocs` 的提交包里，
