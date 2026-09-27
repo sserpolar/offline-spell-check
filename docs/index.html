@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offline Spell Check for Web Pages</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="A Chrome / Edge / Firefox extension that finds misspelled words on any web page with a bundled dictionary. Two permissions, zero network code, 0.05% measured false-positive rate.">
+<style>
+:root{--ink:#16181d;--muted:#5c6270;--line:#e6e8ec;--accent:#0b5fff;--bg:#ffffff;--soft:#f6f7f9}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+main{max-width:760px;margin:0 auto;padding:56px 24px 88px}
+h1{font-size:2.2rem;line-height:1.18;letter-spacing:-.02em;margin:0 0 14px}
+h2{font-size:1.35rem;letter-spacing:-.01em;margin:56px 0 14px}
+h3{font-size:1.05rem;margin:34px 0 10px}
+p{margin:0 0 16px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.tagline{font-size:1.14rem;color:#2c303a;margin:0 0 26px}
+.stats{font-size:.92rem;color:var(--muted);margin:18px 0 0}
+.install{display:flex;flex-wrap:wrap;gap:10px;margin:28px 0 6px}
+.btn{display:inline-block;padding:11px 18px;border:1px solid var(--ink);border-radius:8px;font-weight:600;font-size:.95rem;color:var(--ink);background:#fff}
+.btn.primary{background:var(--ink);color:#fff}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+table{border-collapse:collapse;width:100%;margin:18px 0;font-size:.93rem}
+th,td{border:1px solid var(--line);padding:8px 11px;text-align:left}
+th{background:var(--soft);font-weight:600}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em;background:var(--soft);padding:2px 5px;border-radius:4px}
+pre{background:#111418;color:#e8ebf0;padding:16px 18px;border-radius:10px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.86rem;line-height:1.55}
+pre code{background:none;padding:0;color:inherit}
+.callout{background:#fff8e6;border:1px solid #f0d48a;border-radius:10px;padding:18px 20px;margin:20px 0}
+.callout p:last-child{margin-bottom:0}
+.muted{color:var(--muted)}
+ul{margin:0 0 16px;padding-left:22px}
+li{margin:4px 0}
+hr{border:0;border-top:1px solid var(--line);margin:44px 0}
+footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);font-size:.92rem;color:var(--muted)}
+footer a{margin-right:14px}
+@media(max-width:560px){h1{font-size:1.7rem}main{padding:36px 18px 64px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>Offline Spell Check for Web Pages</h1>
+<p class="tagline">Proofread any page — including the text nobody looks at. <strong>Nothing leaves your browser.</strong> Not as a promise: there is no network code in it that <em>could</em> send anything.</p>
+<div class="install">
+<a class="btn primary" href="https://chromewebstore.google.com/detail/offline-spell-check-for-w/degpnnjbkannnfpcdlppeiheiheoglen">Install for Chrome</a>
+<a class="btn" href="https://microsoftedge.microsoft.com/addons/detail/offline-spell-check-for-w/adnhfnifclidonodinohjolbcpiipoep">Edge</a>
+<a class="btn" href="https://addons.mozilla.org/firefox/addon/offline-spell-check/">Firefox</a>
+</div>
+<p class="stats">Measured 0.05% false positives on ~65,000 words of real documentation · 18/18 non-word recall · 2 permissions, neither of them host access · 0 network requests</p>
+</header><section id="what">
+<h2>What it does</h2>
+<ul>
+<li>Highlights misspelled words in the page's visible text with a red wavy underline</li>
+<li>Also checks the text users never see: <code>&lt;title&gt;</code>, <code>alt</code>, <code>placeholder</code>, <code>aria-label</code></li>
+<li>Suggests corrections on demand — click a highlight, or a row in the popup</li>
+<li>Skips code blocks, camelCase identifiers, acronyms, URLs, paths and non-English elements</li>
+<li><strong>Never modifies the page.</strong> Highlights live in a closed shadow root; the page's DOM is read, never written</li>
+</ul>
+
+<h2>The constraint came first</h2>
+<p>I wanted a spell checker that could proofread a whole web page — not the text I type into a box, but the text already rendered on screen, including the parts nobody looks at: <code>&lt;title&gt;</code>, <code>alt</code>, <code>placeholder</code>, <code>aria-label</code>.</p>
+<p>Every one I tried did one of two things. It sent the page text to a server, or it asked for <strong>“read your data on all websites”</strong> at install time. Usually both.</p>
+<p>So the design constraint came first, before any code: the extension gets <code>activeTab</code> and <code>scripting</code>, and nothing else. No host permissions, no network code at all. Not “we promise not to send anything” — there is no code in it that <em>can</em> send anything, and the dictionary is bundled so there is nothing to fetch.</p>
+<p>That constraint turned out to be the easy part. What follows is the part I got wrong, four times, each time in the same direction: I was optimizing the thing I could see instead of the thing that was costing me.</p>
+<p>Every number below comes from a script in <code>probe/</code>, and those scripts import <code>shared/pipeline.js</code> — the same file the shipped extension loads into the page. The filtering logic is not reimplemented for measurement, so the bytes being measured are the bytes being shipped.</p>
+
+<hr>
+
+<h2>1. The false positives were not a dictionary problem</h2>
+<p>For a page-wide checker, the false-positive rate is the only number that decides whether the thing is usable. A checker that underlines 5% of a technical document is not a checker; it is a red wall you learn to ignore.</p>
+<p>The first honest measurement, on ~65,000 words of real documentation (MDN's <code>fetch</code> page, the VS Code extension API reference, knip's docs, Chrome's extension docs), was <strong>4.50%</strong>. My assumption was obvious and wrong: the dictionary is too small, technical writing is full of jargon, I need more words.</p>
+<p>The single largest contributor was <strong>one page whose content was German, being checked against an English dictionary.</strong> That page alone scored <strong>75.48%</strong>.</p>
+<p>The fix was a language gate — honour the <code>lang</code> attribute on the element and skip what is not English. Not a bigger dictionary. Had I gone with my instinct I would have spent days padding a word list against a problem that had nothing to do with word lists.</p>
+<p>What remained after that fell into one clean category: real technical terms. <code>Uri</code>, <code>Thenable</code>, <code>readonly</code>, <code>webview</code>, <code>args</code>, <code>falsy</code>, <code>cwd</code>, <code>eol</code>, <code>viewport</code>. Those <em>are</em> a word-list problem, and they came down in stages:</p>
+<table>
+<tr><th>Stage</th><th>What was added</th><th class="num">Rate</th></tr>
+<tr><td>1</td><td>Basic skips (short words, digits, acronyms, camelCase)</td><td class="num">4.50%</td></tr>
+<tr><td>2</td><td>Language gate, URL/path stripping, technical term list</td><td class="num">0.55%</td></tr>
+<tr><td>3</td><td>Possessive <code>'s</code> stripping, skip nav / language switchers</td><td class="num">0.30%</td></tr>
+<tr><td>4</td><td>Two further gates</td><td class="num">0.07%</td></tr>
+<tr><td>5</td><td>Technical term list extended by 133 entries</td><td class="num">0.05%</td></tr>
+</table>
+<p>Choosing real documentation as the corpus was deliberate. Prose written for a spelling test does not contain <code>Thenable</code> or a language switcher in the footer, and those are exactly what generates false positives. If I had benchmarked against clean prose I would have shipped something that fell apart on the first API reference page it saw.</p><hr>
+
+<h2>2. The dictionary was not the bottleneck</h2>
+<p>A scan costs <strong>95 ms</strong> total. Here is where it goes:</p>
+<table>
+<tr><th>Phase</th><th class="num">Cost</th></tr>
+<tr><td>DOM walk</td><td class="num">3 ms</td></tr>
+<tr><td>Second pass</td><td class="num">1 ms</td></tr>
+<tr><td>Dictionary lookup (batched)</td><td class="num">0.3 ms</td></tr>
+<tr><td>Message passing to the service worker</td><td class="num">4 ms</td></tr>
+<tr><td><code>executeScript</code> injection</td><td class="num"><strong>81 ms</strong></td></tr>
+</table>
+<p>Injection is <strong>85% of the scan.</strong> Meanwhile I had been optimizing the dictionary — it is 20.7 MB in heap, so I moved it into the service worker, built it once instead of per tab, and batched lookups to avoid per-word round trips.</p>
+<p>All of that was worth doing for memory reasons. None of it touched the number that mattered. The batched lookup I was so pleased with costs <strong>0.3 ms</strong> out of 95.</p>
+<p>Skipping <code>executeScript</code> when the script is already injected would take a re-scan from 95 ms to roughly 14 ms. It is deliberately not in v1.0: 95 ms is already under the perceptual threshold, and I would rather ship the honest measurement than the complexity.</p>
+
+<hr>
+
+<h2>3. My lab harness was silent about the largest cost</h2>
+<p>This is the one that generalizes past spell checkers.</p>
+<p>I had a Node harness. It was fast, it ran offline, it was where I did all my iteration. When I finally instrumented the real extension in Chrome:</p>
+<table>
+<tr><th>Measurement</th><th class="num">Node harness</th><th class="num">Chrome</th><th></th></tr>
+<tr><td>Read <code>index.aff</code> + <code>index.dic</code></td><td class="num">1 ms</td><td class="num"><strong>62 ms</strong></td><td>62×</td></tr>
+<tr><td>Dictionary parse</td><td class="num">61 ms median</td><td class="num">64 ms</td><td>agrees</td></tr>
+<tr><td>Batched lookup</td><td class="num">&lt; 1 ms / 1,000</td><td class="num">0.3 ms</td><td>agrees</td></tr>
+<tr><td>Service worker wake + serialization</td><td class="num">not measurable</td><td class="num">4 ms</td><td>—</td></tr>
+<tr><td><code>executeScript</code> injection</td><td class="num"><strong>no equivalent</strong></td><td class="num"><strong>81 ms</strong></td><td>invisible</td></tr>
+</table>
+<p>Reading two files cost <strong>62× more</strong> in the browser than on disk in Node. And the single largest cost in the whole system — injection — had <strong>no counterpart in the harness at all</strong>, so the harness could not be wrong about it. It simply never mentioned it.</p>
+<p>That is the failure mode worth naming: the harness was accurate about everything it could model, and silent about the thing that dominated. A lab measurement that agrees with production on every axis it shares can still be useless, because the axes it does not share are not flagged as missing. They are just absent.</p><hr>
+
+<h2>4. An optimization that measured well and was still wrong</h2>
+<p>Suffix stripping with root-word fallback: if a word is unknown, strip the suffix and look up the root. <code>deserializing</code> → <code>deserialize</code>. Standard technique, and the numbers came back positive:</p>
+<table>
+<tr><th></th><th class="num">Before</th><th class="num">After</th></tr>
+<tr><td>False positives</td><td class="num">0.09%</td><td class="num">0.08%</td></tr>
+<tr><td>Non-word recall</td><td class="num">18/18</td><td class="num"><strong>16/18</strong></td></tr>
+</table>
+<p>I rolled it back. The two regressions were <code>occured</code> and <code>begining</code>, and the mechanism is structural rather than a tuning problem: both are <strong>omitted double letters at the seam between root and suffix</strong>, so stripping the suffix removes the evidence of the error. There is no threshold at which this technique becomes safe.</p>
+<p>Measurement also showed it did not solve the problem I added it for. <code>deserialize</code>, <code>deallocate</code> and <code>deduplicate</code> fail because <em>the root itself</em> is absent from the dictionary, so a root fallback never fires. It was fixing a different problem than the one I had, slightly, while breaking real catches.</p>
+<p>Trading 2 of 18 real catches for 6 false-positive suppressions is the wrong direction. The safe fix for domain derivatives was extending the technical term list, which is what stages 4 and 5 above did.</p>
+
+<hr>
+
+<h2>The limit I can't fix, stated up front</h2>
+<div class="callout">
+<p>Non-word errors: <strong>18/18</strong>. Real-word errors: <strong>0/6</strong>.</p>
+<p><code>form</code> → <code>from</code>. <code>their</code> → <code>there</code>. <code>lose</code> → <code>loose</code>. The result is a correctly spelled English word, so no dictionary-based checker can flag it — including the one built into your browser. Judging these requires understanding the sentence, not the word.</p>
+<p>If you need that, you need a grammar model, and it will send your text to a server to do it. This one will not, which is the entire point, so the limit is not a defect to be fixed later. It is the price of the constraint.</p>
+</div>
+
+<hr>
+
+<h2>Reproducing it</h2>
+<pre><code>git clone https://github.com/sserpolar/offline-spell-check
+cd offline-spell-check/probe
+npm install
+npm run recall   # recall table, offline
+npm run port     # diffs the hand-ported ESM nspell against upstream, offline
+npm run fp       # false-positive rate; fetches the four pages listed above</code></pre>
+<p><code>npm run recall</code> should print 18/18 non-word, 0/6 real-word, 0/2 inside code blocks, 4/4 on attributes.</p>
+<p>Two caveats worth stating rather than discovering. <code>fp_probe</code> fetches the four documentation pages <strong>live</strong> instead of shipping a frozen copy, so its exact figure drifts as those pages are edited — 0.05% is a measurement taken on a specific day, not a constant. And the browser-side timings cannot be reproduced by the harness at all; they come from instrumentation inside the extension. That gap is the subject of section 3, and it is why the harness is not trusted on its own.</p>
+<p>Full numbers and method: <a href="https://github.com/sserpolar/offline-spell-check/blob/main/BENCHMARK.md">BENCHMARK.md</a>. Engine is <code>nspell</code> (MIT), hand-ported from CJS to ESM and diffed against upstream over 129,000 words — <code>probe/port_check.mjs</code>, 100% identical. Dictionary is SCOWL-derived, 622 KB in the package, attribution-only.</p>
+
+<footer>
+<p>
+<a href="https://github.com/sserpolar/offline-spell-check">Source on GitHub</a>
+<a href="https://github.com/sserpolar/offline-spell-check/blob/main/BENCHMARK.md">Benchmark numbers</a>
+<a href="https://github.com/sserpolar/offline-spell-check/blob/main/PRIVACY.md">Privacy</a>
+</p>
+<p>No network requests. No account. No ads. Two permissions: <code>activeTab</code> and <code>scripting</code>.</p>
+</footer>
+</section>
+</main>
+</body>
+</html>
